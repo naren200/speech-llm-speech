@@ -1,0 +1,24 @@
+FROM ubuntu:22.04
+
+# Set up ROS environment
+ENV ROS_DISTRO=iron
+RUN apt-get update -y && apt-get install -y \
+    locales software-properties-common curl \
+    && locale-gen en_US en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | apt-key add - \
+    && sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list' \
+    && apt-get update -y && apt-get install -y ros-${ROS_DISTRO}-desktop-full \
+    && apt-get clean
+
+# Install Whisper dependencies
+RUN apt-get update -y && apt-get install -y \
+    git cmake build-essential python3-pip && pip3 install --upgrade pip
+RUN pip3 install torch whisper
+
+# Workspace setup
+WORKDIR /root/ros2_ws
+COPY . /root/ros2_ws/src/whisper_asr
+RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
+
+CMD ["/bin/bash"]

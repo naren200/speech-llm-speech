@@ -1,0 +1,15 @@
+<launch>
+  <!-- Launch audio capture node -->
+  <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+    <param name="format" value="wave" />
+    <param name="channels" value="1" />
+    <param name="depth" value="16" />
+    <param name="sample_rate" value="16000" />
+  </node>
+
+  <!-- Launch Whisper ASR node -->
+  <node name="whisper_asr_node" pkg="whisper_ros" type="whisper_asr_node" output="screen">
+    <param name="model_path" value="$(find whisper_ros)/models/ggml-base.en.bin" />
+    <remap from="audio" to="audio/audio" />
+  </node>
+</launch>
