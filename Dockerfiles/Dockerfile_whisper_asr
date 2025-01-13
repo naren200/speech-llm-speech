@@ -67,14 +67,6 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc \
 RUN mkdir -p /root/ros2_ws/src/speech-llm-speech/whisper_asr
 WORKDIR /root/ros2_ws/src/speech-llm-speech/whisper_asr/
 
-# # Initialize rosdep
-# RUN rosdep init && rosdep update
-
-# # Install Python dependencies
-# RUN pip3 install --no-cache-dir --upgrade pip \
-#     && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
-#     && pip3 install setuptools==58.2.0
-
 # Navigate to the workspace
 WORKDIR /root/ros2_ws
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \

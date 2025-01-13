@@ -254,7 +254,7 @@ private:
         }
 
         auto start_time = std::chrono::steady_clock::now();
-        auto timeout = std::chrono::seconds(150);
+        auto timeout = std::chrono::seconds(120 * llm_sequence_.size()/3);
 
         while (responses.size() < futures.size()) {
             for (size_t i = 0; i < futures.size(); ++i) {

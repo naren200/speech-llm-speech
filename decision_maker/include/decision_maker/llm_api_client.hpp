@@ -119,15 +119,21 @@ public:
     }
 
 private:
+    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
+        userp->append((char*)contents, size * nmemb);
+        return size * nmemb;
+    }
+
     APIResponse real_api_call(const std::string& input) {
         CURL* curl = curl_easy_init();
         std::string response_string;
+        std::stringstream stream;
         
         if(curl) {
             std::string api_key = std::getenv("HF_API_KEY");
             
             // Get model from environment variable
-            std::string model = "gpt2";  // default model
+            std::string model = "gpt2";
             if (const char* env_model = std::getenv("HUGGINGFACE_MODEL")) {
                 model = env_model;
             }
@@ -137,9 +143,15 @@ private:
             struct curl_slist* headers = nullptr;
             headers = curl_slist_append(headers, ("Authorization: Bearer " + api_key).c_str());
             headers = curl_slist_append(headers, "Content-Type: application/json");
+            headers = curl_slist_append(headers, "Accept: text/event-stream");
             
             nlohmann::json payload = {
-                {"inputs", input}
+                {"inputs", input},
+                {"parameters", {
+                    {"temperature", 0.5},
+                    {"max_new_tokens", 2048},
+                    {"top_p", 0.7}
+                }}
             };
             
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -152,6 +164,7 @@ private:
             CURLcode res = curl_easy_perform(curl);
             auto end = std::chrono::high_resolution_clock::now();
             
+
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
             
@@ -160,15 +173,25 @@ private:
             }
             
             double latency = std::chrono::duration<double>(end - start).count();
+            
+            // Parse streaming response
+            std::string out;
+            try {
+                auto json_response = nlohmann::json::parse(response_string);
+                out = json_response.value("generated_text", "");
+            } catch (const std::exception& e) {
+                out = "Error parsing response: " + std::string(e.what());
+            }
+            
             std::cout << "HuggingFace Response using model " << model << std::endl;
-            return APIResponse{response_string, latency, 0.7, 0.8};
+            return APIResponse{out, latency, 0.7, 0.8};
         }
         throw std::runtime_error("Failed to initialize CURL");
     }
 
     APIResponse mock_response(const std::string& input) {
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
-        std::string model = std::getenv("HUGGINGFACE_MODEL") ? std::getenv("HUGGINGFACE_MODEL") : "gpt2";
+        std::string model = std::getenv("HUGGINGFACE_MODEL") ? std::getenv("HUGGINGFACE_MODEL") : "llama-3.1";
         return APIResponse{
             "HuggingFace mock response for: " + input + " (using " + model + ")",
             0.15,
@@ -177,7 +200,6 @@ private:
         };
     }
 };
-
 class OllamaClient : public LLMApiClient {
 public:
     APIResponse get_response(const std::string& input) override {

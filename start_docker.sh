@@ -11,16 +11,16 @@ export MOCK_MODE=0
 # Set the model for the decision_maker node
 export OLLAMA_MODEL="gemma2:2b"  # For Ollama model selection
 export OPENAI_MODEL="gpt-3.5-turbo"  # For OpenAI model selection
-export HUGGINGFACE_MODEL="meta-llama/Llama-3.1-8B-Instruct"  # For HuggingFace model selection
-export LLM_SEQUENCE="{3,2,2}"  # For three Ollama instances
-export MOCK_MODE="false"  # Optional: for testing without actual API calls
+export HUGGINGFACE_MODEL="gpt2"  # For HuggingFace model selection
+export LLM_SEQUENCE="{3, 3, 3, 3}"  # For LLM sequence of instances
+
 
 # Run with specific API key for OpenAI and HuggingFace
 export OPENAI_API_KEY=your_key_here
 export HF_API_KEY=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
 
 # Set the audio file for whisper_asr node
-export AUDIO_FILE_NAME="harvard.wav"
+export AUDIO_FILE_NAME="jfk.mp3"
 export AUDIO_FILE="/root/ros2_ws/src/speech-llm-speech/whisper_asr/samples/${AUDIO_FILE_NAME}"
 
 
@@ -30,18 +30,6 @@ if [ "$2" == "--build=true" ]; then
   BUILD_MODE="--build"
   echo "Build mode enabled: Docker images will be rebuilt."
 fi
-
-
-# # Check only for NVIDIA Container Toolkit in Docker
-# if ! docker info | grep -q "Runtimes:.*nvidia"; then
-#     echo "Configuring NVIDIA Container Toolkit for Docker..."
-    
-#     # Configure Docker to use NVIDIA Container Toolkit
-#     sudo nvidia-ctk runtime configure --runtime=docker
-#     sudo systemctl restart docker
-#     sleep 2
-#     echo "NVIDIA Container Toolkit configured."
-# fi
 
 # Requires input parameter: what mode of use_case is this?
 # Options:
