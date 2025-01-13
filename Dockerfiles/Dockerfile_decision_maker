@@ -87,7 +87,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
 # Install gtts using pip3
 RUN pip3 install gtts && \
     pip3 install flask && \
-    pip3 install flask_cors
+    pip3 install flask_cors && \
+    pip3 install textblob && \
+    pip3 install vaderSentiment 
 
 
 CMD ["/bin/bash", "-l"]

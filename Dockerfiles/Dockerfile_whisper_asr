@@ -1,7 +1,5 @@
 
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
-
-# ubuntu:22.04
+FROM ubuntu:22.04
 
 # Specify bash as the shell for RUN commands
 SHELL ["/bin/bash", "-c"]
@@ -9,12 +7,12 @@ SHELL ["/bin/bash", "-c"]
 # Set environment variables
 ENV TZ='America/New_York' \
     DEBIAN_FRONTEND=noninteractive \
-    ROS_DISTRO=iron \
-    NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
-    CUDA_HOME=/usr/local/cuda \
-    PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} \
-    LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+    ROS_DISTRO=iron 
+    # NVIDIA_VISIBLE_DEVICES=all \
+    # NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
+    # CUDA_HOME=/usr/local/cuda \
+    # PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} \
+    # LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 # Install basic dependencies and set up ROS 2 repositories
 RUN apt-get update && apt-get install -y \
@@ -31,12 +29,12 @@ RUN apt-get update && apt-get install -y \
     git \
     python3-pip \
     locales \
-    nvidia-cuda-toolkit \
-    nvidia-utils-535 \
-    cuda-command-line-tools-12-3 \
-    nvidia-container-toolkit \
+    # nvidia-cuda-toolkit \
+    # nvidia-utils-535 \
+    # cuda-command-line-tools-12-3 \
+    # nvidia-container-toolkit \
     portaudio19-dev \
-    python3-colcon-common-extensions \
+    # python3-colcon-common-extensions \
     ros-iron-ament-cmake \
     ros-iron-ament-cmake-auto \
     python3-rosdep \
@@ -57,24 +55,37 @@ RUN add-apt-repository universe \
     && apt-get install -y ros-iron-desktop ros-dev-tools \
     && rm -rf /var/lib/apt/lists/*
 
+# Source the ROS 2 setup script
+RUN apt-get update && apt-get install -y \
+&& source /opt/ros/${ROS_DISTRO}/setup.bash
+
 # Configure ROS2 environment
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc \
     && echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
 
 # Set up workspace
+RUN mkdir -p /root/ros2_ws/src/speech-llm-speech/whisper_asr
+WORKDIR /root/ros2_ws/src/speech-llm-speech/whisper_asr/
+
+# # Initialize rosdep
+# RUN rosdep init && rosdep update
+
+# # Install Python dependencies
+# RUN pip3 install --no-cache-dir --upgrade pip \
+#     && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
+#     && pip3 install setuptools==58.2.0
+
+# Navigate to the workspace
 WORKDIR /root/ros2_ws
-COPY . /root/ros2_ws/src/speech-llm-speech/
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    python3-colcon-core \
+    ros-iron-ament-cmake \
+    && source /opt/ros/iron/setup.bash \
 
-# Initialize rosdep
-RUN rosdep init && rosdep update
+# Install gtts using pip3
+RUN pip3 install gtts && \
+pip3 install flask && \
+pip3 install flask_cors
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir --upgrade pip \
-    && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
-    && pip3 install setuptools==58.2.0
-
-# Build the workspace
-RUN source /opt/ros/iron/setup.bash \
-    && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 CMD ["/bin/bash", "-l"]

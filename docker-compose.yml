@@ -8,12 +8,14 @@ services:
       dockerfile: Dockerfile_whisper_asr
     container_name: whisper_asr_node
     environment:
+      - AUDIO_FILE=${AUDIO_FILE}
       - COMPUTER_ROLE=${COMPUTER_ROLE}
       - ROS_MASTER_URI=http://localhost:11311
       - ROS_IP=127.0.0.1
     network_mode: host
     volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech/whisper_asr"
+      - "${LOCAL_ROS_WS}/whisper.cpp:/root/ros2_ws/src/speech-llm-speech/whisper.cpp"
+      - "${LOCAL_ROS_WS}/whisper_asr:/root/ros2_ws/src/speech-llm-speech/whisper_asr"
     logging:
       driver: "json-file"
       options:

@@ -1,28 +1,30 @@
 #!/bin/bash
 
 export LOCAL_ROS_WS="$HOME/Documents/GitHub/speech-llm-speech"
-# export LOCAL_PADMA_ROS_CONFIG_PATH="$HOME/Documents/GitHub/padma-ros-config"
-# export LOCAL_PADMA_WEB_UI_PATH="$HOME/Documents/GitHub/padma-web-ui"
 
+# Enable DEVELOPER mode for manual container connection
 # export DEVELOPER=True
+
 # Enable mock mode for API testing
 export MOCK_MODE=0
 
-# Run with specific API key (if needed)
-export OPENAI_API_KEY=your_key_here
-export HF_API_KEY=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
-
+# Set the model for the decision_maker node
 export OLLAMA_MODEL="gemma2:2b"  # For Ollama model selection
 export OPENAI_MODEL="gpt-3.5-turbo"  # For OpenAI model selection
 export HUGGINGFACE_MODEL="gpt2"  # For HuggingFace model selection
 export LLM_SEQUENCE="{3,3,3}"  # For three Ollama instances
 export MOCK_MODE="false"  # Optional: for testing without actual API calls
 
+# Run with specific API key for OpenAI and HuggingFace
+export OPENAI_API_KEY=your_key_here
+export HF_API_KEY=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
+
+# Set the audio file for whisper_asr node
+export AUDIO_FILE_NAME="harvard.wav"
+export AUDIO_FILE="/root/ros2_ws/src/speech-llm-speech/whisper_asr/samples/${AUDIO_FILE_NAME}"
 
 
-# Example: ./start_docker.sh transcribe --build=true
-
-# Check for "build" mode
+# Check for "build" mode -> Example: ./start_docker.sh transcribe --build=true
 BUILD_MODE=""
 if [ "$2" == "--build=true" ]; then
   BUILD_MODE="--build"
@@ -41,7 +43,7 @@ fi
 #     echo "NVIDIA Container Toolkit configured."
 # fi
 
-# Requires input parameter: what computer is this?
+# Requires input parameter: what mode of use_case is this?
 # Options:
 #     transcribe
 #     decide
@@ -69,7 +71,7 @@ COMPUTER_ROLE=$1
 # # Export the environment variable so it can be accessed by docker-compose
 export COMPUTER_ROLE
 
-PKG=""
+PKG="/whisper_asr"
 # Start containers based on role
 if [ "$COMPUTER_ROLE" == "transcribe" ]; then
   PKG="/whisper_asr"
@@ -90,9 +92,6 @@ export PKG
 
 # Allow local connections to the X server
 xhost +local:docker
-
-# # Start the Docker Compose services in the background
-# docker compose up -d --remove-orphans
 
 echo "waiting..."
 # docker compose logs

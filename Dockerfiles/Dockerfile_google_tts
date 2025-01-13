@@ -53,7 +53,6 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc \
 
 # Set up workspace
 WORKDIR /root/ros2_ws
-# Create necessary directories
 RUN mkdir -p /root/ros2_ws/src/speech-llm-speech/google_tts
 COPY . /root/ros2_ws/src/speech-llm-speech/google_tts/.
 # COPY . /root/ros2_ws/src/speech-llm-speech/
