@@ -1,27 +1,49 @@
 cmake_minimum_required(VERSION 3.8)
 project(whisper_asr)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
 
-# find dependencies
+# Add the path to the cmake/ folder in whisper.cpp
+set(WHISPER_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../whisper.cpp/src")
+set(CMAKE_MODULE_PATH "${WHISPER_CPP_DIR}/cmake" ${CMAKE_MODULE_PATH})
+message("CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
+# Path to the whisper.cpp build directory where libwhisper.a is generated
+set(WHISPER_CPP_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../whisper.cpp/build")
+
+# Add whisper.cpp source files
+set(WHISPER_CPP_SOURCES
+    ${WHISPER_CPP_DIR}/src/whisper.cpp  # Adjusted to point to the actual file
+    ${WHISPER_CPP_DIR}/ggml/     # Include ggml core if required
+    ${WHISPER_CPP_DIR}/cmake     # Include ggml core if required
+)
+
+
+# Ensure CMake knows about this path
+link_directories(${WHISPER_CPP_BUILD_DIR})
+
+
+# Add include directories
+include_directories(
+    ${WHISPER_CPP_DIR}/include
+    ${WHISPER_CPP_DIR}/ggml
+)
+
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
+add_executable(whisper_asr_node src/whisper_asr_node.cpp ${WHISPER_CPP_DIR})
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# Link whisper library
+target_link_libraries(whisper_asr_node ${WHISPER_CPP_BUILD_DIR}/src/libwhisper.so)  # Link the static library
+
+ament_target_dependencies(whisper_asr_node
+  rclcpp
+  std_msgs
+)
+
+install(TARGETS
+  whisper_asr_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()

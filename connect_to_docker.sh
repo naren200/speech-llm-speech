@@ -49,7 +49,7 @@ else
         # Only one container running, connect to it
         container_id=$(echo "$running_containers")
         echo "Connecting to the running container and executing startup script (ID: $container_id)..."
-        docker exec -it "$container_id" /bin/bash -l -c "/bin/bash src/speech-llm-speech/start_in_docker.sh" || error_exit "Failed to execute startup script in the container."
+        docker exec -it "$container_id" /bin/bash -l -c "/bin/bash /root/ros2_ws/src/speech-llm-speech${PKG}/start_in_docker.sh" || error_exit "Failed to execute startup script in the container."
     elif [ "$container_count" -gt 1 ]; then
         # Multiple containers running, request container ID
         echo "Multiple containers are running:"

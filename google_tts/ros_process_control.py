@@ -71,8 +71,8 @@ class Ros2LaunchParent:
 
 app = Flask(__name__)
 CORS(app)
-path = 'src/speech-llm-speech/google_tts/launch/'
-file = os.getenv('LAUNCH_FILE', 'robot_dual_camera_spray_test_launch.py')
+path = '/root/ros2_ws/src/speech-llm-speech/google_tts/launch/'
+file = os.getenv('LAUNCH_FILE', 'google_tts_launch.py')
 ld = generate_launch_description(path, file)
 manager = Ros2LaunchParent(ld)
 manager.start()

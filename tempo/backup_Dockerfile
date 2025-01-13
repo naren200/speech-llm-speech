@@ -8,7 +8,8 @@
 # https://hub.docker.com/r/nvidia/cuda/tags
 # FROM nvidia/cuda:12.3.1-base-ubuntu22.04
 # FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
-FROM ubuntu:22.04
+FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
+# FROM ubuntu:22.04
 
 # use bash as assumed for install steps
 SHELL ["/bin/bash", "-c"]
@@ -19,6 +20,50 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV ROS_DISTRO=iron
 # assume GPU available for inference
 # ARG USE_GPU=false
+# NVIDIA Configuration
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    software-properties-common \
+    git \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Install NVIDIA CUDA Toolkit and utilities
+RUN apt-get update && apt-get install -y \
+    nvidia-cuda-toolkit \
+    nvidia-utils-535 \
+    cuda-command-line-tools-12-3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set CUDA environment variables
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+
+RUN apt-get update && \
+    apt-get install -y nvidia-container-toolkit && \
+    nvidia-ctk runtime configure --runtime=docker
+
+
+# # Install NVIDIA development tools
+# RUN apt-get update && apt-get install -y \
+#     nvidia-utils-535 \
+#     && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # copy packages from S3 buckets
 # COPY Vimba64_v6.0_Linux.tgz /root/
@@ -46,7 +91,7 @@ RUN apt update -y && apt install -y ros-dev-tools
 RUN apt update -y
 RUN apt upgrade -y
 RUN apt install -y dialog
-RUN apt install -y ros-iron-desktop-full
+RUN apt install -y ros-iron-desktop
 
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 # ENV ROS_DOMAIN_ID 0
@@ -93,9 +138,7 @@ WORKDIR /root/ros2_ws/src/speech-llm-speech/
 RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
 RUN apt-get update -y
-# RUN apt-get install -y python3-tk libprotoc-dev protobuf-compiler libopenblas-base libopenmpi-dev python3-pip python3-pyqt5
-RUN apt-get install -y python3-colcon-common-extensions
-# RUN apt-get install -y python3-matplotlib
+
 RUN apt install -y ros-iron-ament-cmake-clang-format
 
 # some other useful things
@@ -112,22 +155,30 @@ WORKDIR /root/ros2_ws/
 # Build packages
 # * Reference: https://docs.ros.org/en/iron/Tutorials/Beginner-Client-Libraries/Colcon-Tutorial.html
 # * Reference: https://docs.ros.org/en/iron/Tutorials/Colcon-Tutorial.html
- 
+
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y \
+    libcurl4-openssl-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install required ROS2 development packages
 RUN apt-get update && apt-get install -y \
-    python3-colcon-common-extensions \
-    ros-iron-ament-cmake \
-    ros-iron-ament-cmake-auto \
-    && rm -rf /var/lib/apt/lists/*
+python3-colcon-common-extensions \
+ros-iron-ament-cmake \
+ros-iron-ament-cmake-auto \
+&& rm -rf /var/lib/apt/lists/*
 
 RUN /bin/bash -c 'source /opt/ros/iron/setup.bash && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release'
 
 RUN apt install python3-rosdep
 
-
-# # Source ROS2 axnd build in a single RUN command
-# RUN /bin/bash -c 'source /opt/ros/iron/setup.bash && \
-#     colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release'
+# Source ROS2 axnd build in a single RUN command
+RUN /bin/bash -c 'source /opt/ros/iron/setup.bash && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release'
 
 
 # Set the default command to an interactive login shell

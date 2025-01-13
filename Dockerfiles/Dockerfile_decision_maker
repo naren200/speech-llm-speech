@@ -141,6 +141,13 @@ RUN apt install python3-rosdep
 # RUN /bin/bash -c 'source /opt/ros/iron/setup.bash && \
 # colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release'
 
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y \
+    libcurl4-openssl-dev \
+    nlohmann-json3-dev
 
 # Workspace setup
 WORKDIR /root/ros2_ws

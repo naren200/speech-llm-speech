@@ -5,9 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
-#include <sstream>
 #include "decision_maker/llm_api_client.hpp"
-
 
 class ThreadPool {
 private:
@@ -59,22 +57,27 @@ public:
     }
 };
 
-
 class DecisionMakingNode : public rclcpp::Node {
 private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr speech_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr response_pub_;
+    std::shared_ptr<LLMApiClient> openai_client_;
+    std::shared_ptr<LLMApiClient> huggingface_client_;
+    std::shared_ptr<LLMApiClient> ollama_client_;
     std::unique_ptr<ThreadPool> thread_pool_;
     std::mutex response_mutex_;
-    std::vector<int> llm_sequence_;
     
 public:
     DecisionMakingNode() : Node("decision_making_node") {
+        // Initialize thread pool with hardware concurrency
         thread_pool_ = std::make_unique<ThreadPool>(std::thread::hardware_concurrency());
         
-        // Parse LLM sequence from environment variable
-        parse_llm_sequence();
-
+        // Initialize API clients
+        openai_client_ = std::make_shared<OpenAIClient>();
+        huggingface_client_ = std::make_shared<HuggingFaceClient>();
+        ollama_client_ = std::make_shared<OllamaClient>();
+        
+        // Create subscribers and publishers
         speech_sub_ = this->create_subscription<std_msgs::msg::String>(
             "/recognized_speech", 10,
             std::bind(&DecisionMakingNode::speech_callback, this, std::placeholders::_1));
@@ -83,68 +86,30 @@ public:
     }
 
 private:
-    void parse_llm_sequence() {
-        const char* seq = std::getenv("LLM_SEQUENCE");
-        if (!seq) {
-            RCLCPP_ERROR(this->get_logger(), "LLM_SEQUENCE environment variable not set");
-            throw std::runtime_error("LLM_SEQUENCE not set");
-        }
-
-        std::string sequence(seq);
-        std::stringstream ss(sequence);
-        std::string item;
-
-        // Remove { and } from the string
-        sequence.erase(std::remove(sequence.begin(), sequence.end(), '{'), sequence.end());
-        sequence.erase(std::remove(sequence.begin(), sequence.end(), '}'), sequence.end());
-
-        // Split by comma
-        std::stringstream ss2(sequence);
-        while (std::getline(ss2, item, ',')) {
-            llm_sequence_.push_back(std::stoi(item));
-        }
-    }
-
-    std::shared_ptr<LLMApiClient> create_llm_client(int type) {
-        switch(type) {
-            case 1:
-                return std::make_shared<OpenAIClient>();
-            case 2:
-                return std::make_shared<HuggingFaceClient>();
-            case 3:
-                RCLCPP_INFO(this->get_logger(), "Creating Ollama client");
-                return std::make_shared<OllamaClient>();
-            default:
-                throw std::runtime_error("Invalid LLM type");
-        }
-    }
-
     void speech_callback(const std_msgs::msg::String::SharedPtr msg) {
         std::vector<std::future<APIResponse>> futures;
         std::vector<APIResponse> responses;
         
-        // Launch API calls in parallel for each LLM in sequence
-        for (int llm_type : llm_sequence_) {
-            auto client = create_llm_client(llm_type);
-            futures.push_back(std::async(std::launch::async, 
-                [client, msg]() { return client->get_response(msg->data); }));
-        }
+        // Launch API calls in parallel using thread pool
+        auto openai_future = std::async(std::launch::async, 
+            [this, msg]() { return openai_client_->get_response(msg->data); });
+        auto huggingface_future = std::async(std::launch::async, 
+            [this, msg]() { return huggingface_client_->get_response(msg->data); });
+        auto ollama_future = std::async(std::launch::async, 
+            [this, msg]() { return ollama_client_->get_response(msg->data); });
 
         try {
-            auto timeout = std::chrono::seconds(1500);
+            // Wait for all responses with timeout
+            auto timeout = std::chrono::seconds(5);
             
-            for (size_t i = 0; i < futures.size(); ++i) {
-                if (futures[i].wait_for(timeout) == std::future_status::ready) {
-                    auto response = futures[i].get();
-                    RCLCPP_INFO(this->get_logger(), 
-                        "LLM %d Score: %.3f (Latency: %.3f, Sentiment: %.3f, Relevance: %.3f)",
-                        llm_sequence_[i],
-                        calculate_score(response),
-                        response.latency,
-                        response.sentiment_score,
-                        response.relevance_score);
-                    responses.push_back(response);
-                }
+            if (openai_future.wait_for(timeout) == std::future_status::ready) {
+                responses.push_back(openai_future.get());
+            }
+            if (huggingface_future.wait_for(timeout) == std::future_status::ready) {
+                responses.push_back(huggingface_future.get());
+            }
+            if (ollama_future.wait_for(timeout) == std::future_status::ready) {
+                responses.push_back(ollama_future.get());
             }
         } catch (const std::exception& e) {
             RCLCPP_ERROR(this->get_logger(), "API call failed: %s", e.what());
@@ -155,8 +120,10 @@ private:
             return;
         }
 
+        // Select best response based on scoring
         auto best_response = select_best_response(responses);
         
+        // Publish response
         auto response_msg = std_msgs::msg::String();
         response_msg.data = best_response.text;
         response_pub_->publish(response_msg);
@@ -167,17 +134,10 @@ private:
             throw std::runtime_error("No responses available");
         }
 
-        auto best_response = *std::max_element(responses.begin(), responses.end(),
-            [this](const APIResponse& a, const APIResponse& b) {
+        return *std::max_element(responses.begin(), responses.end(),
+            [](const APIResponse& a, const APIResponse& b) {
                 return calculate_score(a) < calculate_score(b);
             });
-
-        RCLCPP_INFO(this->get_logger(), "Selected best response with score: %.3f and text: \n%s",
-            calculate_score(best_response), best_response.text.c_str());
-
-        // RCLCPP_INFO(this->get_logger(), "Selected best response", best_response.text.c_str());
-
-        return best_response;
     }
 
     static double calculate_score(const APIResponse& response) {

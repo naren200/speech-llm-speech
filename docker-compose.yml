@@ -1,72 +1,65 @@
-# version: '3.8'
-
-# services:
-#   speech-llm-speech:
-#     image: naren200/speech-llm-speech:v1
-#     logging:
-#       driver: "json-file"
-#       options:
-#         max-size: "10m"
-#         max-file: "3"
-#     init: true
-#     volumes:
-#       - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
-#     privileged: true
-#     stdin_open: true
-#     tty: true
-#     network_mode: host
-
 version: '3.8'
 
 services:
   whisper_asr_node:
+    image: whisper_asr_node
     build:
-      context: ./naren200/whisper_asr
-      dockerfile: Dockerfile
+      context: ./Dockerfiles
+      dockerfile: Dockerfile_whisper_asr
     container_name: whisper_asr_node
+    environment:
+      - COMPUTER_ROLE=${COMPUTER_ROLE}
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_IP=127.0.0.1
+    network_mode: host
+    volumes:
+      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
     logging:
-      driver: "whisper-asr-json-file"
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  google_tts_node:
+    image: naren200/google_tts_node:v1
+    build:
+      context: ./Dockerfiles
+      dockerfile: Dockerfile_google_tts
+    container_name: google_tts_node
+    environment:
+      - COMPUTER_ROLE=${COMPUTER_ROLE}
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_IP=127.0.0.1
+    network_mode: host
+    volumes:
+      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech/google_tts"
+    logging:
+      driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
     init: true
-    volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
-    network_mode: host
-    environment:
-      - ROS_MASTER_URI=http://localhost:11311
-      - ROS_IP=127.0.0.1
-
-  google_tts_node:
-    build:
-      context: ./naren200/google_tts
-      dockerfile: Dockerfile
-    container_name: google_tts_node
-    logging:
-      driver: "google-tts-json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    network_mode: host
-    volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
-    environment:
-      - ROS_MASTER_URI=http://localhost:11311
-      - ROS_IP=127.0.0.1
+    ports:
+      - "11434:11434"
+    privileged: true
+    stdin_open: true
+    tty: true
 
   decision_maker_node:
+    image: decision_maker_node
     build:
-      context: ./naren200/decision_maker
-      dockerfile: Dockerfile
+      context: ./Dockerfiles
+      dockerfile: Dockerfile_decision_maker
     container_name: decision_maker_node
+    environment:
+      - COMPUTER_ROLE=${COMPUTER_ROLE}
+      - ROS_MASTER_URI=http://localhost:11311
+      - ROS_IP=127.0.0.1
+    network_mode: host
+    volumes:
+      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
     logging:
-      driver: "decision-maker-json-file"
+      driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
-    network_mode: host
-    environment:
-      - ROS_MASTER_URI=http://localhost:11311
-      - ROS_IP=127.0.0.1

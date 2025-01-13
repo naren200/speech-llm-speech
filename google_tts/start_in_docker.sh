@@ -1,6 +1,7 @@
 #!/bin/bash
 # Source all the necessary environment setup files
 source /opt/ros/iron/setup.bash
+colcon build
 source /root/ros2_ws/install/setup.bash
 
 # git config --global --add safe.directory /root/ros2_ws/src/agrobot
@@ -23,6 +24,6 @@ sleep 2
 # Run the Flask application
 # cd src/padma-web-ui/; python3 -m http.server 8080 &
 cd /root/ros2_ws/; colcon build; 
-#flask --app src/agrobot/ros_process_control.py run --host=0.0.0.0 --port=5050
+flask --app /root/ros2_ws/src/speech-llm-speech/google_tts/ros_process_control.py run --host=0.0.0.0 --port=5050
 
 #while true; do sleep 2; done

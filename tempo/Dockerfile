@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM nvidia/cuda:12.3.1-devel-ubuntu22.04
 
 
 # Specify bash as the shell for RUN commands
@@ -7,7 +7,12 @@ SHELL ["/bin/bash", "-c"]
 # Set environment variables
 ENV TZ='America/New_York' \
     DEBIAN_FRONTEND=noninteractive \
-    ROS_DISTRO=iron 
+    ROS_DISTRO=iron \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
+    CUDA_HOME=/usr/local/cuda \
+    PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} \
+    LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 # Install basic dependencies and set up ROS 2 repositories
 RUN apt-get update && apt-get install -y \
@@ -22,62 +27,52 @@ RUN apt-get update && apt-get install -y \
 # Install system dependencies and ROS 2 packages
 RUN apt-get update && apt-get install -y \
     git \
+    python3-pip \
     locales \
+    nvidia-cuda-toolkit \
+    nvidia-utils-535 \
+    cuda-command-line-tools-12-3 \
+    nvidia-container-toolkit \
+    portaudio19-dev \
     python3-colcon-common-extensions \
     ros-iron-ament-cmake \
     ros-iron-ament-cmake-auto \
+    python3-rosdep \
     libcurl4-openssl-dev \
-    python3-pip \
+    nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Configure locale
 RUN locale-gen en_US en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
 # Install ROS2
-RUN apt-get update && add-apt-repository universe \
+RUN add-apt-repository universe \
     && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null \
-    && apt-get update -y \
-    && apt-get install -y ros-${ROS_DISTRO}-desktop ros-dev-tools \
+    && apt-get update \
+    && apt-get install -y ros-iron-desktop ros-dev-tools \
     && rm -rf /var/lib/apt/lists/*
-
-# Source the ROS 2 setup script
-RUN apt-get update && apt-get install -y \
-    && source /opt/ros/${ROS_DISTRO}/setup.bash
 
 # Configure ROS2 environment
 RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc \
     && echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
 
-
 # Set up workspace
 WORKDIR /root/ros2_ws
-# Create necessary directories
-RUN mkdir -p /root/ros2_ws/src/speech-llm-speech/google_tts
-COPY . /root/ros2_ws/src/speech-llm-speech/google_tts/.
-# COPY . /root/ros2_ws/src/speech-llm-speech/
+COPY . /root/ros2_ws/src/speech-llm-speech/
 
-# # Initialize rosdep
-# RUN rosdep init && rosdep update
+# Initialize rosdep
+RUN rosdep init && rosdep update
 
 # Install Python dependencies
-# RUN apt-get update && apt-get install -y python3-pip \
-#     && python3 -m pip install --no-cache-dir --upgrade pip \
-    # && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
-    # && pip3 install setuptools==58.2.0
+RUN pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
+    && pip3 install setuptools==58.2.0
 
-# Navigate to the workspace
-WORKDIR /root/ros2_ws
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    python3-colcon-core \
-    ros-iron-ament-cmake \
-    && source /opt/ros/iron/setup.bash \
-
-# Install gtts using pip3
-RUN pip3 install gtts && \
-    pip3 install flask && \
-    pip3 install flask_cors
-
+# Build the workspace
+RUN source /opt/ros/iron/setup.bash \
+    && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 CMD ["/bin/bash", "-l"]
