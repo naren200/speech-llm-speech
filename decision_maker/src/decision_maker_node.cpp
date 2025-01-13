@@ -103,21 +103,57 @@ public:
         APIResponse response;
         SentimentAnalyzer::SentimentScore sentiment;
         double final_score;
+        int llm_type;
     };
 
-    static ScoredResponse select_best_response(const std::vector<APIResponse>& responses) {
+    static ScoredResponse select_best_response(
+        const std::vector<APIResponse>& responses, 
+        const std::vector<int>& llm_types,
+        rclcpp::Logger logger) {  // Add logger parameter
+            
         std::vector<ScoredResponse> scored_responses;
         
-        for (const auto& response : responses) {
-            auto sentiment = SentimentAnalyzer::analyze(response.text);
-            double score = calculate_response_score(response, sentiment);
-            scored_responses.push_back({response, sentiment, score});
+        for (size_t i = 0; i < responses.size(); i++) {
+            auto sentiment = SentimentAnalyzer::analyze(responses[i].text);
+            double score = calculate_response_score(responses[i], sentiment);
+            
+            RCLCPP_INFO(logger,
+                "\nLLM %d Response Details:"
+                "\n  Text Length: %zu"
+                "\n  Latency: %.3f"
+                "\n  Sentiment Polarity: %.3f"
+                "\n  Sentiment Subjectivity: %.3f"
+                "\n  Relevance Score: %.3f"
+                "\n  Final Score: %.3f",
+                llm_types[i],
+                responses[i].text.length(),
+                responses[i].latency,
+                sentiment.polarity,
+                sentiment.subjectivity,
+                responses[i].relevance_score,
+                score);
+                
+            scored_responses.push_back({
+                responses[i], 
+                sentiment, 
+                score, 
+                llm_types[i]
+            });
         }
         
         auto best = std::max_element(scored_responses.begin(), scored_responses.end(),
             [](const ScoredResponse& a, const ScoredResponse& b) {
                 return a.final_score < b.final_score;
             });
+            
+        RCLCPP_INFO(logger,
+            "\nSelected Best Response:"
+            "\n  LLM Type: %d"
+            "\n  Final Score: %.3f"
+            "\n  Response Text: %s",
+            best->llm_type,
+            best->final_score,
+            best->response.text.c_str());
             
         return *best;
     }
@@ -208,48 +244,59 @@ private:
         std::vector<std::future<APIResponse>> futures;
         std::vector<APIResponse> responses;
         
-        // First collect all futures
+        RCLCPP_INFO(this->get_logger(), "Starting response generation for %zu LLMs", llm_sequence_.size());
+        
         for (int llm_type : llm_sequence_) {
             auto client = create_llm_client(llm_type);
+            RCLCPP_DEBUG(this->get_logger(), "Initiating request for LLM type %d", llm_type);
             futures.push_back(std::async(std::launch::async, 
                 [client, msg]() { return client->get_response(msg->data); }));
         }
 
-        // Wait for all responses with proper state checking
         auto start_time = std::chrono::steady_clock::now();
-        auto timeout = std::chrono::seconds(1500);
+        auto timeout = std::chrono::seconds(150);
 
         while (responses.size() < futures.size()) {
             for (size_t i = 0; i < futures.size(); ++i) {
-                // Skip already processed futures
                 if (i < responses.size()) continue;
                 
-                // Check if future is valid before accessing
+                RCLCPP_DEBUG(this->get_logger(), "Checking future %zu status", i);
+                
                 if (futures[i].valid() && 
                     futures[i].wait_for(std::chrono::milliseconds(100)) == 
                     std::future_status::ready) {
                     try {
                         responses.push_back(futures[i].get());
                         RCLCPP_INFO(this->get_logger(), 
-                            "Received response %zu of %zu from %d number of LLM responses ",
+                            "Response %zu received. Response text length: %zu", 
                             responses.size(), 
-                            futures.size(), 
-                            llm_sequence_[i]);
+                            responses.back().text.length());
                     } catch (const std::exception& e) {
-                        RCLCPP_WARN(this->get_logger(), 
-                            "Failed to get response from LLM %d: %s", 
+                        RCLCPP_ERROR(this->get_logger(), 
+                            "LLM %d failed with error: %s", 
                             llm_sequence_[i], 
                             e.what());
                     }
+                } else if (futures[i].valid()) {
+                    RCLCPP_DEBUG(this->get_logger(), 
+                        "Future %zu still pending", i);
                 }
             }
             
-            // Check for timeout
-            if (std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::steady_clock::now() - start_time) > timeout) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::steady_clock::now() - start_time);
+            
+            RCLCPP_DEBUG(this->get_logger(), 
+                "Waiting for responses: %zu/%zu (Elapsed: %ld seconds)", 
+                responses.size(), 
+                futures.size(), 
+                elapsed.count());
+                
+            if (elapsed > timeout) {
                 RCLCPP_WARN(this->get_logger(), 
-                    "Timeout reached. Proceeding with %zu responses",
-                    responses.size());
+                    "Timeout reached with %zu/%zu responses", 
+                    responses.size(), 
+                    futures.size());
                 break;
             }
             
@@ -270,7 +317,7 @@ private:
                 RCLCPP_INFO(this->get_logger(), 
                     "Published single available response");
             } else {
-                auto selected = ResponseSelector::select_best_response(responses);
+                auto selected = ResponseSelector::select_best_response(responses, llm_sequence_, this->get_logger());
                 
                 auto response_msg = std_msgs::msg::String();
                 response_msg.data = selected.response.text;
@@ -287,7 +334,7 @@ private:
         }
     }
 
-    APIResponse select_best_response(const std::vector<APIResponse>& responses) {
+   APIResponse select_best_response(const std::vector<APIResponse>& responses) {
         if (responses.empty()) {
             throw std::runtime_error("No responses available");
         }

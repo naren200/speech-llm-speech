@@ -8,11 +8,6 @@ SHELL ["/bin/bash", "-c"]
 ENV TZ='America/New_York' \
     DEBIAN_FRONTEND=noninteractive \
     ROS_DISTRO=iron 
-    # NVIDIA_VISIBLE_DEVICES=all \
-    # NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics \
-    # CUDA_HOME=/usr/local/cuda \
-    # PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH} \
-    # LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 # Install basic dependencies and set up ROS 2 repositories
 RUN apt-get update && apt-get install -y \
@@ -29,12 +24,6 @@ RUN apt-get update && apt-get install -y \
     git \
     python3-pip \
     locales \
-    # nvidia-cuda-toolkit \
-    # nvidia-utils-535 \
-    # cuda-command-line-tools-12-3 \
-    # nvidia-container-toolkit \
-    # portaudio19-dev \
-    # python3-colcon-common-extensions \
     ros-iron-ament-cmake \
     ros-iron-ament-cmake-auto \
     python3-rosdep \
@@ -66,15 +55,6 @@ RUN echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc \
 # Set up workspace
 RUN mkdir -p /root/ros2_ws/src/speech-llm-speech/decision_maker
 WORKDIR /root/ros2_ws/src/speech-llm-speech/decision_maker/
-# COPY decision_maker/ /root/ros2_ws/src/speech-llm-speech/decision_maker/.
-
-# # Initialize rosdep
-# RUN rosdep init && rosdep update
-
-# # Install Python dependencies
-# RUN pip3 install --no-cache-dir --upgrade pip \
-#     && pip3 install --no-cache-dir --ignore-installed -r /root/ros2_ws/src/speech-llm-speech/requirements.txt \
-#     && pip3 install setuptools==58.2.0
 
 # Navigate to the workspace
 WORKDIR /root/ros2_ws

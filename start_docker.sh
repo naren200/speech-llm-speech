@@ -11,8 +11,8 @@ export MOCK_MODE=0
 # Set the model for the decision_maker node
 export OLLAMA_MODEL="gemma2:2b"  # For Ollama model selection
 export OPENAI_MODEL="gpt-3.5-turbo"  # For OpenAI model selection
-export HUGGINGFACE_MODEL="gpt2"  # For HuggingFace model selection
-export LLM_SEQUENCE="{3,3,3}"  # For three Ollama instances
+export HUGGINGFACE_MODEL="meta-llama/Llama-3.1-8B-Instruct"  # For HuggingFace model selection
+export LLM_SEQUENCE="{3,2,2}"  # For three Ollama instances
 export MOCK_MODE="false"  # Optional: for testing without actual API calls
 
 # Run with specific API key for OpenAI and HuggingFace
