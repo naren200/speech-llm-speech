@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   whisper_asr_node:
-    image: whisper_asr_node
+    image: naren200/whisper_asr_node:v1
     build:
       context: ./Dockerfiles
       dockerfile: Dockerfile_whisper_asr
@@ -13,12 +13,18 @@ services:
       - ROS_IP=127.0.0.1
     network_mode: host
     volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
+      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech/whisper_asr"
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    init: true
+    ports:
+      - "11434:11434"
+    privileged: true
+    stdin_open: true
+    tty: true
 
   google_tts_node:
     image: naren200/google_tts_node:v1
@@ -46,20 +52,34 @@ services:
     tty: true
 
   decision_maker_node:
-    image: decision_maker_node
+    image: naren200/decision_maker_node:v1
     build:
       context: ./Dockerfiles
       dockerfile: Dockerfile_decision_maker
     container_name: decision_maker_node
     environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - HF_API_KEY=${HF_API_KEY}
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - HUGGINGFACE_MODEL=${HUGGINGFACE_MODEL}
+      - LLM_SEQUENCE=${LLM_SEQUENCE}
+      - MOCK_MODE=${MOCK_MODE}
       - COMPUTER_ROLE=${COMPUTER_ROLE}
       - ROS_MASTER_URI=http://localhost:11311
       - ROS_IP=127.0.0.1
     network_mode: host
     volumes:
-      - "${LOCAL_ROS_WS}:/root/ros2_ws/src/speech-llm-speech"
+      - "${LOCAL_ROS_WS}/decision_maker:/root/ros2_ws/src/speech-llm-speech/decision_maker"
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+    init: true
+    ports:
+      - "11434:11434"
+    privileged: true
+    stdin_open: true
+    tty: true
+

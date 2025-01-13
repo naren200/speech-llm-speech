@@ -4,7 +4,7 @@ export LOCAL_ROS_WS="$HOME/Documents/GitHub/speech-llm-speech"
 # export LOCAL_PADMA_ROS_CONFIG_PATH="$HOME/Documents/GitHub/padma-ros-config"
 # export LOCAL_PADMA_WEB_UI_PATH="$HOME/Documents/GitHub/padma-web-ui"
 
-export DEVELOPER=True
+# export DEVELOPER=True
 # Enable mock mode for API testing
 export MOCK_MODE=0
 
@@ -15,7 +15,7 @@ export HF_API_KEY=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
 export OLLAMA_MODEL="gemma2:2b"  # For Ollama model selection
 export OPENAI_MODEL="gpt-3.5-turbo"  # For OpenAI model selection
 export HUGGINGFACE_MODEL="gpt2"  # For HuggingFace model selection
-export LLM_SEQUENCE="{3,2,3}"  # For three Ollama instances
+export LLM_SEQUENCE="{3,3,3}"  # For three Ollama instances
 export MOCK_MODE="false"  # Optional: for testing without actual API calls
 
 
@@ -69,7 +69,7 @@ COMPUTER_ROLE=$1
 # # Export the environment variable so it can be accessed by docker-compose
 export COMPUTER_ROLE
 
-PKG="/whisper_asr"
+PKG=""
 # Start containers based on role
 if [ "$COMPUTER_ROLE" == "transcribe" ]; then
   PKG="/whisper_asr"
