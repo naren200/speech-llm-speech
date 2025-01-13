@@ -67,7 +67,7 @@ speech-llm-speech/
 │   ├── output
 │       |── synthetic_audio.wav
 ```
-
+https://youtu.be/qFFDkh0DOK8
 
 
 #### start node: decision_maker
