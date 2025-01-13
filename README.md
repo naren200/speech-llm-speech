@@ -95,6 +95,12 @@ And, set the variable as follows
 ```bash
 export AUDIO_FILE_NAME='jack.wav'
 ```
+And, download the model from using the following command under `whisper_asr/model/`
+```bash
+./download-ggml-model.sh base.en
+```
+
+
 ##### Execution:
 
 The below commands starts the docker, copies the necessary files inside the docker, builds and sources them for launch. Launch file gets executed automatically through flask.
