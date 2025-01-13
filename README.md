@@ -98,8 +98,6 @@ speech-llm-speech/
 │       |── synthetic_audio.wav
 ```
 
-Docker Login: 
-Docker password: K&5?pUU3C_)wt7b
 
 
 #### start node: decision_maker
