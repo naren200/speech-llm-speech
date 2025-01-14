@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export MODEL_NAME=download-ggml-model.sh
 # Source ROS environment
 source /opt/ros/iron/setup.bash
 
@@ -7,6 +8,14 @@ source /opt/ros/iron/setup.bash
 cd /root/ros2_ws/src/speech-llm-speech
 if [ ! -f "whisper.cpp/CMakeLists.txt" ]; then
     echo "whisper.cpp CMakeLists.txt not found, cloning repository..."
+    
+    # Clean up if directory exists
+    # Stop and remove any processes using whisper.cpp
+    lsof +D whisper.cpp/ 2>/dev/null | awk '{print $2}' | tail -n +2 | xargs kill -9 2>/dev/null
+    cd ..
+    rm -rf whisper.cpp/
+
+    cd /root/ros2_ws/src/speech-llm-speech/
     git clone https://github.com/ggerganov/whisper.cpp.git
     cd whisper.cpp
     # Build whisper.cpp
@@ -40,8 +49,8 @@ if [ ! -f "model/ggml-base.en.bin" ]; then
     echo "Creating model directory and downloading base model..."
     mkdir -p model
     cd model
-    cp ../assets/download-ggml-model.sh .
-    sh ./download-ggml-model.sh base.en
+    cp ../assets/${MODEL_NAME} .
+    sh ./${MODEL_NAME} base.en
 else
     echo "Model directory exists, skipping download..."
 fi

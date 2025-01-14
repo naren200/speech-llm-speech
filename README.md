@@ -37,7 +37,7 @@ cd speech-llm-speech
 ```
 
 ### 2. Configue the following environment variables in `start_docker.sh` file:
-The local ROS workspace location needs to be configured for quick start.
+The local ROS workspace location need to be configured for quick start.
 ```bash
 LOCAL_ROS_WS=your_repo_local_location # REQUIRED
 OPENAI_API_KEY=your_key_here # Optional
@@ -45,8 +45,15 @@ HF_API_KEY=your_key_here # Optional
 OLLAMA_MODEL=gemma2:2b # Optional
 MOCK_MODE=0  # Set to 1 to use mock LLM responses # Optional
 ```
+### 3. Pull docker image
+Pull the pre-built docker image
+```bash
+docker pull naren200/google_tts_node:v1
+docker pull naren200/decision_maker_node:v1
+docker pull naren200/whisper_asr_node:v1
+```
 
-### 3. Test out the system:
+### 4. Test out the system:
 #### start node: google_tts
 The below commands starts the docker, copies the necessary files inside the docker, builds and sources them for launch. Launch file gets executed automatically through flask.
 ```bash
@@ -69,6 +76,7 @@ speech-llm-speech/
 ```
 https://youtu.be/qFFDkh0DOK8
 
+**Note**: Please stop the current docker container if you run into any issue. Documented [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#stop-any-container-running-in-the-background).
 
 #### start node: decision_maker
 The below commands starts the docker, copies the necessary files inside the docker, builds and sources them for launch. Launch file gets executed automatically through flask.
@@ -83,25 +91,9 @@ ros2 topic pub /recognized_speech std_msgs/msg/String "data: 'How to reach etern
 ```
 https://youtu.be/MSFU5G0aQJo
 
+**Note**: Please stop the current docker container if you run into any issue. Documented [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#stop-any-container-running-in-the-background).
+
 #### start node: whisper_asr
-Please configure the `{AUDIO_FILE_NAME}` variable in `start_docker.sh` and place the audio file in the below depicted file location.
-```plaintext
-speech-llm-speech/
-├── whisper_asr/
-│   ├── samples
-│       |── jack.wav
-```
-And, set the variable as follows
-```bash
-export AUDIO_FILE_NAME='jack.wav'
-```
-And, download the model from using the following command under `whisper_asr/model/`
-```bash
-./download-ggml-model.sh base.en
-```
-
-
-##### Execution:
 
 The below commands starts the docker, copies the necessary files inside the docker, builds and sources them for launch. Launch file gets executed automatically through flask.
 ```bash
@@ -110,6 +102,33 @@ The below commands starts the docker, copies the necessary files inside the dock
 ```
 The transcribed audio will be printed in the screen. 
 
+**Note**: Please stop the current docker container if you run into any issue. Documented [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#stop-any-container-running-in-the-background).
+
+###### Extra Configuration: whisper_asr
+
+Please configure the `{AUDIO_FILE_NAME}` variable in `start_docker.sh` and place the audio file in the below depicted file location.
+```plaintext
+speech-llm-speech/
+├── whisper_asr/
+│   ├── samples
+│       |── jack.wav
+```
+And, set the variable in `start_docker.sh` as follows
+```bash
+export AUDIO_FILE_NAME='jack.wav'
+```
+**Optional**: If may run another transcription model through replacement of bash script under `whisper_asr/assets`. 
+```plaintext
+speech-llm-speech/
+├── whisper_asr/
+│   ├── assets
+│       |── download-ggml-model.sh
+```
+And, mention the name `MODEL_NAME` ENV variable of the corresponding bash script under `whisper_asr/start_in_docker.sh` file.
+```bash
+export MODEL_NAME=download-ggml-model.sh
+```
+You may find new models under this repository: [https://github.com/ggerganov/whisper.cpp/tree/master/models](https://github.com/ggerganov/whisper.cpp/tree/master/models)
 
 ---
 #### Stop any container running in the background
@@ -118,7 +137,7 @@ The transcribed audio will be printed in the screen.
 ```
 
 
-### Steps to build the Docker Image
+### Docker Image
 #### Quick start
 Pull the pre-built image
 ```bash
@@ -155,26 +174,39 @@ docker build -t naren200/google_tts_node:v1 -f ./Dockerfiles/Dockerfile_google_t
 
 
 #### 2. Developer Mode
-- **Purpose**: This mode is intended for developers who need to debug, experiment, or modify the system.
-- **Configuration**:  
-  Set the `{DEVELOPER}` variable to `True` in the `start_docker.sh` script:  
-  ```bash
-  export DEVELOPER=True
-  ```
-- **How to Use**:  
-  ```bash
-  ./start_docker.sh <mode> --build=true
-  ```
-  The `--build=true` flag forces the system to rebuild the Docker image before starting.
-- **Features**: 
-  - Allows manual interaction with the Docker container.
-  - Developers can:
-    - Run individual nodes or launch files.
-    - Access and modify specific paths or files within the container.
-    - Inspect logs and diagnose issues.
-  - Useful for testing new changes or configurations.
+**Configuration**: Enable developer mode by setting the environment variable:
+```bash
+export DEVELOPER=True
+```
 
-#### 3. Business Model Scalability:
+**Usage with --developer=true**:
+```bash
+./start_docker.sh <mode> --developer=true
+```
+This mode attaches you to the running Docker container, allowing you to:
+- Run individual nodes or launch files
+- Access and modify container files
+- Inspect logs and diagnose issues
+- Test configurations without rebuilding
+
+#### 3. Build Mode
+**Usage with --build=true**:
+```bash
+./start_docker.sh <mode> --build=true
+```
+This mode:
+- Forces a complete rebuild of the Docker image
+- Recreates all containers from scratch
+- Updates any code changes in the image
+- Restarts services with the new build
+
+You can combine both flags if needed:
+```bash
+./start_docker.sh <mode> --developer=true --build=true
+```
+This will rebuild the image and then attach you to the container for development.
+
+#### 4. Business Model Scalability:
 By abstracting the complexity into `start_docker.sh`, the system becomes easier to use in real-world scenarios, reducing the need for technical expertise.
 
 ---

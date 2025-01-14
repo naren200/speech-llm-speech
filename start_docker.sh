@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export LOCAL_ROS_WS="$HOME/Documents/GitHub/speech-llm-speech"
+export LOCAL_ROS_WS="$HOME/Documents/speech-llm-speech"
 
 # Enable DEVELOPER mode for manual container connection
 # export DEVELOPER=True
