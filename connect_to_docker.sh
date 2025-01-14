@@ -57,7 +57,7 @@ else
         echo "Please specify the container ID to connect to:"
         read -r container_id
         echo "Connecting to the specified container and executing startup script (ID: $container_id)..."
-        docker exec -it "$container_id" /bin/bash -l -c "/bin/bash src/speech-llm-speech/start_in_docker.sh" || error_exit "Failed to execute startup script in the container."
+        docker exec -it "$container_id" /bin/bash -l -c "/bin/bash /root/ros2_ws/src/speech-llm-speech${PKG}/start_in_docker.sh" || error_exit "Failed to execute startup script in the container."
     fi
 fi
 

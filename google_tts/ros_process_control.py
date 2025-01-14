@@ -11,13 +11,13 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
-#  flask --app src/agrobot/ros_process_control.py run --host=0.0.0.0 --port=5050
+#  flask --app /root/ros2_ws/src/speech-llm-speech/google_tts/ros_process_control.py run --host=0.0.0.0 --port=5050
 
 if __name__ == '__main__':
     print()
     print('    ERROR !!! This needs to be run with flask: !!!')
     print()
-    print('    flask --app src/agrobot/ros_process_control.py run --host=0.0.0.0 --port=5050')
+    print('    flask --app /root/ros2_ws/src/speech-llm-speech/google_tts/ros_process_control.py run --host=0.0.0.0 --port=5050')
     print()
     exit(1)
 

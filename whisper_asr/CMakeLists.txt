@@ -15,8 +15,8 @@ set(WHISPER_CPP_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../whisper.cpp/build")
 set(WHISPER_CPP_SOURCES
     ${WHISPER_CPP_DIR}/src/whisper.cpp  # Adjusted to point to the actual file
     ${WHISPER_CPP_DIR}/ggml/     # Include ggml core if required
-    ${WHISPER_CPP_DIR}/ggml/include     # Include ggml core if required
-    ${WHISPER_CPP_DIR}/cmake     # Include ggml core if required
+    ${WHISPER_CPP_DIR}/ggml/include     # Include ggml include manually if required
+    ${WHISPER_CPP_DIR}/cmake     # Include cmake after building if required
 )
 
 

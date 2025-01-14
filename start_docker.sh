@@ -26,10 +26,19 @@ export AUDIO_FILE="/root/ros2_ws/src/speech-llm-speech/whisper_asr/samples/${AUD
 
 # Check for "build" mode -> Example: ./start_docker.sh transcribe --build=true
 BUILD_MODE=""
-if [ "$2" == "--build=true" ]; then
+if [ "$2" = "--build=true" ] || [ "$2" = "--build=True" ]; then
   BUILD_MODE="--build"
   echo "Build mode enabled: Docker images will be rebuilt."
 fi
+
+
+# Check for "build" mode -> Example: ./start_docker.sh transcribe --build=true
+DEVELOPER=False
+if [ "$2" = "--developer=true" ] || [ "$2" = "--developer=True" ]; then
+  DEVELOPER="--developer"
+  echo "Developer mode enabled: Docker images will just be attached."
+fi
+
 
 # Requires input parameter: what mode of use_case is this?
 # Options:
@@ -40,14 +49,14 @@ fi
 # Check if the provided parameter is one of the allowed values
 if [ "$1" != "transcribe" ] && [ "$1" != "decide" ] && [ "$1" != "speak" ]; then
   echo ""
-  echo "Error: Invalid computer identifier provided."
+  echo "Error: Invalid mode provided."
   echo ""
   echo "    Options: "
-  echo "        transcribe: all nodes on this one computer"
-  echo "        decide: distributed across two computers; this is the primary, running robot nodes and left camera vision"
-  echo "        speak: distributed across two computers; this is the secondary, only right camera vision"
+  echo "        transcribe: decodes audio and publishes the decoded transcript"
+  echo "        decide: publishes best LLM response for the user query among several sequence of LLM responses"
+  echo "        speak: generates audio of the user-defined transcript"
   echo ""
-  echo "Usage: $0 <SINGLE|DISTR_1|DISTR_2>"
+  echo "Usage: $0 <transcribe|decide|speak>"
   echo ""
   exit 1
 fi
@@ -84,7 +93,6 @@ xhost +local:docker
 echo "waiting..."
 # docker compose logs
 
-# Wait a little bit for the container to be fully up and running
 # Adjust the sleep time as necessary based on your container's startup time
 sleep 2
 

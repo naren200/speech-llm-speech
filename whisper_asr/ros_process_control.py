@@ -11,7 +11,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
-#  flask --app src/agrobot/ros_process_control.py run --host=0.0.0.0 --port=5050
+#  flask --app /root/ros2_ws/src/speech-llm-speech/whisper_asr/ros_process_control.py run --host=0.0.0.0 --port=5050
 
 if __name__ == '__main__':
     print()

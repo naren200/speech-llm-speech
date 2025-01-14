@@ -36,14 +36,14 @@ git clone https://github.com/yourusername/speech-llm-speech.git
 cd speech-llm-speech
 ```
 
-### 2. Configue the following environment variables in `.env` file:
+### 2. Configue the following environment variables in `start_docker.sh` file:
 The local ROS workspace location needs to be configured for quick start.
 ```bash
 LOCAL_ROS_WS=your_repo_local_location # REQUIRED
 OPENAI_API_KEY=your_key_here # Optional
 HF_API_KEY=your_key_here # Optional
 OLLAMA_MODEL=gemma2:2b # Optional
-MOCK_MODE=0  # Set to 1 to use mock LLM responses
+MOCK_MODE=0  # Set to 1 to use mock LLM responses # Optional
 ```
 
 ### 3. Test out the system:
@@ -112,6 +112,11 @@ The transcribed audio will be printed in the screen.
 
 
 ---
+#### Stop any container running in the background
+```bash
+./stop_docker.sh
+```
+
 
 ### Steps to build the Docker Image
 #### Quick start

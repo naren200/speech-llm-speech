@@ -3,8 +3,8 @@
 <package format="3">
   <name>whisper_asr</name>
   <version>0.0.1</version>
-  <description>ROS2 wrapper for Whisper ASR</description>
-  <maintainer email="your@email.com">Your Name</maintainer>
+  <description>whisper_asr ROS2 node decodes audio and publishes the decoded transcript</description>
+  <maintainer email="narendhiran2000@gmail.com">Narendhiran Saravanane</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
