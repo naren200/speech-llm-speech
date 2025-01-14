@@ -67,7 +67,7 @@ speech-llm-speech/
 │   ├── output
 │       |── synthetic_audio.wav
 ```
-
+https://youtu.be/qFFDkh0DOK8
 
 
 #### start node: decision_maker
@@ -81,7 +81,7 @@ Then, Publish Topic data in another terminal.
 docker exec -it $(docker ps -q) bash # Navigate to the active docker image instance
 ros2 topic pub /recognized_speech std_msgs/msg/String "data: 'How to reach eternity during human life?'" --once ## Publish a string only once
 ```
-
+https://youtu.be/MSFU5G0aQJo
 
 #### start node: whisper_asr
 Please configure the `{AUDIO_FILE_NAME}` variable in `start_docker.sh` and place the audio file in the below depicted file location.
