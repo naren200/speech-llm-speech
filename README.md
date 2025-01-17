@@ -23,10 +23,28 @@ The system consists of three main nodes:
 - Outputs synthesized audio through speakers
 
 ## Prerequisites
-
 - Docker and Docker Compose
 - ROS2 (tested on Iron)
 - Ubuntu 22.04 or higher
+
+### Dependencies Installation Guide
+
+1. **Install Docker on Ubuntu 22.04**  
+   Follow the guide to install Docker:  
+   [How to Install and Use Docker on Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04)
+
+2. **Perform Post-Installation Steps for Docker**  
+   Ensure you complete the post-installation steps as outlined here:  
+   [Post-Installation Steps for Docker on Linux](https://docs.docker.com/engine/install/linux-postinstall/)
+
+3. **Install NVIDIA Container Toolkit (For GPU Users)**  
+   If you're using a GPU, install the NVIDIA Container Toolkit by referring to:  
+   [NVIDIA Container Toolkit Installation Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+
+4. **Install Docker Compose on Ubuntu 22.04**  
+   Set up Docker Compose using the instructions here:  
+   [How to Install and Use Docker Compose on Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-compose-on-ubuntu-22-04)
+
 
 ## Quick Start
 
