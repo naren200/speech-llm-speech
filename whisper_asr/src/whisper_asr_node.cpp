@@ -1,134 +1,165 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <whisper.h>
 #include <memory>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
-#include <fstream>
-#include <cstring>
+#include <sstream>
+#include <algorithm>
+#include <cstdlib>
+#include <unistd.h>
 
 class WhisperASRNode : public rclcpp::Node {
 public:
     WhisperASRNode() : Node("whisper_asr_node") {
-        // Initialize publisher
         publisher_ = this->create_publisher<std_msgs::msg::String>("recognized_speech", 10);
         
-        // Get audio file from environment
-        const char* audio_file = std::getenv("AUDIO_FILE");
+        // Get parameters
+        model_path_ = this->declare_parameter("model_path", 
+            "/root/ros2_ws/src/speech-llm-speech/whisper_asr/model/ggml-base.en.bin");
+        whisper_cli_path_ = this->declare_parameter("whisper_cli_path", 
+            "/root/ros2_ws/src/speech-llm-speech/whisper.cpp/build/bin/whisper-cli");
         
-        // Initialize Whisper context parameters
-        whisper_context_params context_params = whisper_context_default_params();
-        
-        // Initialize Whisper
-        ctx_ = whisper_init_from_file_with_params("src/speech-llm-speech/whisper_asr/model/ggml-base.en.bin", context_params);
-        if (!ctx_) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize Whisper model");
-            throw std::runtime_error("Whisper initialization failed");
-        }
-
-
-        // Process audio file if specified
-        if (audio_file) {
-            timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(100),
-                std::bind(&WhisperASRNode::processAudioFile, this));
-        } else {
-            RCLCPP_ERROR(this->get_logger(), "No audio file specified");
-            throw std::runtime_error("Invalid audio file configuration");
-        }
-    }
-
-    ~WhisperASRNode() {
-        if (ctx_) {
-            whisper_free(ctx_);
-        }
+        // Process audio when initialized
+        processAudio();
     }
 
 private:
-    void processAudioFile() {
-        try {
-            const char* audio_file = std::getenv("AUDIO_FILE");
-            if (!audio_file) {
-                RCLCPP_ERROR(this->get_logger(), "No audio file specified");
-                return;
-            }
-
-            std::vector<float> audio_data = loadAudioFile(audio_file);
-            processAudio(audio_data);
-        } catch (const std::exception& e) {
-            RCLCPP_ERROR(this->get_logger(), "File processing error: %s", e.what());
+    std::string get_sample_rate(const std::string& filename) {
+        std::string cmd = "ffprobe -v error -select_streams a:0 -show_entries stream=sample_rate -of default=noprint_wrappers=1:nokey=1 " + filename;
+        char buffer[128];
+        std::string result = "";
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) throw std::runtime_error("Failed to execute ffprobe");
+        
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
         }
+        pclose(pipe);
+        
+        // Remove trailing newline
+        if (!result.empty() && result.back() == '\n') {
+            result.pop_back();
+        }
+        return result;
     }
 
-    void processAudio(const std::vector<float>& audio_data) {
-        whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+    std::string convert_to_16k(const std::string& input_file) {
+        // Create temporary output file
+        char tmp_template[] = "/tmp/whisper_XXXXXX.wav";
+        int fd = mkstemps(tmp_template, 4); // Create .wav file
+        if (fd == -1) throw std::runtime_error("Failed to create temp file");
+        close(fd);
         
-        // Set essential parameters
-        params.print_realtime = true;
-        params.print_progress = false;
-        params.print_timestamps = true;
-        params.print_special = false;
-        params.translate = false;
-        params.language = "en";
-        params.n_threads = 4;
-        params.offset_ms = 0;
-        params.duration_ms = 0;
+        std::string output_file(tmp_template);
+        
+        std::string cmd = "ffmpeg -y -i " + input_file + 
+                         " -acodec pcm_s16le -ac 1 -ar 16000 " + output_file + 
+                         " > /dev/null 2>&1";
+                         
+        int result = system(cmd.c_str());
+        if (result != 0) {
+            unlink(output_file.c_str());
+            throw std::runtime_error("Audio conversion failed");
+        }
+        
+        return output_file;
+    }
 
-        // Process audio
-        if (whisper_full(ctx_, params, audio_data.data(), audio_data.size()) != 0) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to process audio");
+    std::string cleanTranscript(const std::string& raw_output) {
+        std::stringstream ss(raw_output);
+        std::string line;
+        std::string cleaned;
+        
+        while (std::getline(ss, line)) {
+            size_t end_bracket = line.find(']');
+            if (end_bracket != std::string::npos && end_bracket + 2 < line.size()) {
+                std::string text = line.substr(end_bracket + 2);
+                text.erase(text.begin(), std::find_if(text.begin(), text.end(), [](int ch) {
+                    return !std::isspace(ch);
+                }));
+                text.erase(std::find_if(text.rbegin(), text.rend(), [](int ch) {
+                    return !std::isspace(ch);
+                }).base(), text.end());
+                
+                if (!text.empty()) {
+                    cleaned += text + " ";
+                }
+            }
+        }
+        
+        if (!cleaned.empty() && cleaned.back() == ' ') {
+            cleaned.pop_back();
+        }
+        
+        return cleaned;
+    }
+
+    void processAudio() {
+        const char* audio_file = std::getenv("AUDIO_FILE");
+        if (!audio_file) {
+            RCLCPP_ERROR(this->get_logger(), "AUDIO_FILE environment variable not set");
             return;
         }
 
-        // Get results
-        const int n_segments = whisper_full_n_segments(ctx_);
-        std::cout<<"n_segments: "<<n_segments<<std::endl;
-        for (int i = 0; i < n_segments; ++i) {
-            const char* text = whisper_full_get_segment_text(ctx_, i);
-            std::cout << "Segment " << i << ": " << text << std::endl;
-            if (text && strlen(text) > 0) {
-                auto msg = std_msgs::msg::String();
-                msg.data = text;
-                publisher_->publish(msg);
-                RCLCPP_INFO(this->get_logger(), "Published: '%s'", text);
+        std::string actual_audio_file = audio_file;
+        bool converted = false;
+
+        try {
+            // Check sample rate
+            std::string sample_rate = get_sample_rate(audio_file);
+            if (sample_rate != "16000") {
+                RCLCPP_INFO(this->get_logger(), "Converting audio from %sHz to 16000Hz", sample_rate.c_str());
+                actual_audio_file = convert_to_16k(audio_file);
+                converted = true;
             }
-        }
-    }
-
-
-    std::vector<float> loadAudioFile(const char* filename) {
-        std::ifstream file(filename, std::ios::binary);
-        if (!file.is_open()) {
-            throw std::runtime_error("Failed to open audio file");
+        } catch (const std::exception& e) {
+            RCLCPP_ERROR(this->get_logger(), "Audio check/conversion failed: %s", e.what());
+            return;
         }
 
-        // Read WAV header first
-        char header[44];
-        file.read(header, 44);  // Standard WAV header size
+        // Build command
+        std::string command = whisper_cli_path_ + " -m " + model_path_ + " " + actual_audio_file;
+        RCLCPP_INFO(this->get_logger(), "Executing: %s", command.c_str());
 
-        // Get actual data size from header
-        uint32_t data_size = *reinterpret_cast<uint32_t*>(&header[40]);
-        uint16_t num_channels = *reinterpret_cast<uint16_t*>(&header[22]);
-        uint32_t sample_rate = *reinterpret_cast<uint32_t*>(&header[24]);
-
-        // Read audio samples
-        std::vector<int16_t> pcm16;
-        pcm16.resize(data_size / sizeof(int16_t));
-        file.read(reinterpret_cast<char*>(pcm16.data()), data_size);
-
-        // Convert to float32
-        std::vector<float> audio_data;
-        audio_data.resize(pcm16.size());
-        for (size_t i = 0; i < pcm16.size(); i++) {
-            audio_data[i] = static_cast<float>(pcm16[i]) / 32768.0f;
+        // Execute command and capture output
+        char buffer[128];
+        std::string result = "";
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to execute command");
+            if (converted) unlink(actual_audio_file.c_str());
+            return;
         }
 
-        return audio_data;
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
+        }
+        pclose(pipe);
+
+        // Clean up converted file if we created one
+        if (converted) {
+            unlink(actual_audio_file.c_str());
+        }
+
+        // Clean the output
+        std::string cleaned_text = cleanTranscript(result);
+
+        // Publish cleaned result
+        if (!cleaned_text.empty()) {
+            auto msg = std_msgs::msg::String();
+            msg.data = cleaned_text;
+            publisher_->publish(msg);
+            RCLCPP_INFO(this->get_logger(), "Published cleaned text: '%s'", msg.data.c_str());
+        } else {
+            RCLCPP_WARN(this->get_logger(), "No speech recognized in audio file");
+        }
     }
 
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-    rclcpp::TimerBase::SharedPtr timer_;
-    struct whisper_context* ctx_;
+    std::string model_path_;
+    std::string whisper_cli_path_;
 };
 
 int main(int argc, char** argv) {

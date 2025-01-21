@@ -1,6 +1,10 @@
 #!/bin/bash
 
-export LOCAL_ROS_WS="$HOME/Documents/speech-llm-speech"
+# Get the directory where this script resides
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+# Automatically set ROS workspace to the script's parent directory
+export LOCAL_ROS_WS="$SCRIPT_DIR"
 
 # Enable DEVELOPER mode for manual container connection
 # export DEVELOPER=True
@@ -17,7 +21,7 @@ export LLM_SEQUENCE="{3, 3, 3, 3}"  # For LLM sequence of instances
 
 # Run with specific API key for OpenAI and HuggingFace
 export OPENAI_API_KEY=your_key_here
-export HF_API_KEY=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
+export HF_API_KEY=your_key_here
 
 # Set the audio file for whisper_asr node
 export AUDIO_FILE_NAME="jfk.mp3"
@@ -72,14 +76,14 @@ PKG="/whisper_asr"
 # Start containers based on role
 if [ "$COMPUTER_ROLE" == "transcribe" ]; then
   PKG="/whisper_asr"
-  docker compose up -d $BUILD_MODE whisper_asr_node --remove-orphans
+  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE whisper_asr_node --remove-orphans
 elif [ "$COMPUTER_ROLE" == "speak" ]; then
   PKG="/google_tts"
   export LOCAL_ROS_WS="$HOME/Documents/GitHub/speech-llm-speech/google_tts"
-  docker compose up -d $BUILD_MODE google_tts_node --remove-orphans 
+  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE google_tts_node --remove-orphans 
 elif [ "$COMPUTER_ROLE" == "decide" ]; then
   PKG="/decision_maker"
-  docker compose up -d $BUILD_MODE decision_maker_node --remove-orphans
+  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE decision_maker_node --remove-orphans
 else
   echo "Invalid role. Use: transcribe, speak, or decide."
   exit 1

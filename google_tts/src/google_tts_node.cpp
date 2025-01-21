@@ -32,9 +32,9 @@ private:
 public:
     GoogleTTSNode() : Node("google_tts_node") {
         subscription_ = this->create_subscription<std_msgs::msg::String>(
-            "/text_to_speak", 10,
+            "/recognized_speech", 10,
             std::bind(&GoogleTTSNode::textToSpeakCallback, this, std::placeholders::_1));
-        
+            // "/text_to_speak"
         RCLCPP_INFO(this->get_logger(), "Google TTS Node is running...");
     }
 };

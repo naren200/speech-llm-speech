@@ -61,6 +61,7 @@ WORKDIR /root/ros2_ws/src/speech-llm-speech/whisper_asr/
 WORKDIR /root/ros2_ws
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     python3-colcon-core \
+    ffmpeg \
     ros-iron-ament-cmake \
     && source /opt/ros/iron/setup.bash \
 
