@@ -11,13 +11,13 @@ export OPENAI_API_KEY="your_key_here"
 export HF_API_KEY=""
 
 # Model Configuration
-export OLLAMA_MODEL="gemma2:2b"
+export OLLAMA_MODEL="qwen:0.5b"
 export OPENAI_MODEL="gpt-3.5-turbo"
 export HUGGINGFACE_MODEL="gpt2"
 export LLM_SEQUENCE="{3, 3, 3, 3}"
 
 # Audio Configuration
-AUDIO_FILE_NAME="OSR_us_000_0017_8k.wav" # "jfk.wav"
+AUDIO_FILE_NAME="OSR_us_000_0038_8k.wav" #OSR_us_000_0017_8k.wav" # "jfk.wav"
 export AUDIO_FILE="/root/ros2_ws/src/speech-llm-speech/whisper_asr/samples/${AUDIO_FILE_NAME}"
 
 # Command line handling

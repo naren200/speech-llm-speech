@@ -17,7 +17,7 @@ if __name__ == '__main__':
     print()
     print('    ERROR !!! This needs to be run with flask: !!!')
     print()
-    print('    flask --app /root/ros2_ws/src/speech-llm-speech/decision_asr/ros_process_control.py run --host=0.0.0.0 --port=5050')
+    print('    flask --app /root/ros2_ws/src/speech-llm-speech/decision_asr/ros_process_control.py run --host=0.0.0.0 --port=5000')
     print()
     exit(1)
 

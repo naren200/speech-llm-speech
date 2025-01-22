@@ -81,6 +81,7 @@ services:
     init: true
     ports:
       - "11434:11434"
+      - "5050:5050"
     privileged: true
     stdin_open: true
     tty: true

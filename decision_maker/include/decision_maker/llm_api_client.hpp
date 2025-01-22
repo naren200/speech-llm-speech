@@ -218,7 +218,7 @@ private:
         std::future<ollama::response> response_future = std::async(std::launch::async, [&input, &latency]() {
             try {
                 auto start = std::chrono::high_resolution_clock::now();
-                auto reponse_string = ollama::generate("gemma2:2b", input);
+                auto reponse_string = ollama::generate("qwen:0.5b", input);
                 auto end = std::chrono::high_resolution_clock::now();
                 latency = std::chrono::duration<double>(end - start).count();
                 return reponse_string;

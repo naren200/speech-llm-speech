@@ -14,5 +14,24 @@ export MOCK_MODE="/"
 export AUDIO_FILE="/"
 
 
-# Stop and remove the Docker Compose services, networks, and volumes
+# Forcefully close terminals first
+TERMINAL_IDS_FILE="/tmp/ros2_docker_terminals.txt"
+
+if [ -f "$TERMINAL_IDS_FILE" ]; then
+    echo "Force-closing terminals..."
+    while read -r term_title; do
+        if [ -n "$term_title" ]; then
+            echo "Killing: $term_title"
+            # Force kill terminal and its child processes
+            pkill -f "gnome-terminal.*--title=$term_title" 2>/dev/null
+            pkill -f "bash.*DEV_TERM_$term_title" 2>/dev/null
+            pkill -f "bash.*RUN_TERM_$term_title" 2>/dev/null
+        fi
+    done < "$TERMINAL_IDS_FILE"
+    rm "$TERMINAL_IDS_FILE"
+fi
+
+# Stop and remove the Docker Compose services
 docker compose down --remove-orphans
+
+echo "Docker Compose services stopped and removed."

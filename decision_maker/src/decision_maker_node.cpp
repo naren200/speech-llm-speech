@@ -198,7 +198,7 @@ public:
             "/recognized_speech", 10,
             std::bind(&DecisionMakingNode::speech_callback, this, std::placeholders::_1));
             
-        response_pub_ = this->create_publisher<std_msgs::msg::String>("/final_response", 10);
+        response_pub_ = this->create_publisher<std_msgs::msg::String>("/text_to_speech", 10);
     }
 
 private:
@@ -254,7 +254,7 @@ private:
         }
 
         auto start_time = std::chrono::steady_clock::now();
-        auto timeout = std::chrono::seconds(120 * llm_sequence_.size()/3);
+        auto timeout = std::chrono::seconds(10 * llm_sequence_.size()/3);
 
         while (responses.size() < futures.size()) {
             for (size_t i = 0; i < futures.size(); ++i) {
@@ -297,6 +297,7 @@ private:
                     "Timeout reached with %zu/%zu responses", 
                     responses.size(), 
                     futures.size());
+                
                 break;
             }
             
@@ -341,13 +342,13 @@ private:
 
         auto best_response = *std::max_element(responses.begin(), responses.end(),
             [this](const APIResponse& a, const APIResponse& b) {
-                return calculate_score(a) < calculate_score(b);
+                return calculate_score(a) > calculate_score(b);
             });
 
         RCLCPP_INFO(this->get_logger(), "Selected best response with score: %.3f and text: \n%s",
             calculate_score(best_response), best_response.text.c_str());
 
-        // RCLCPP_INFO(this->get_logger(), "Selected best response", best_response.text.c_str());
+        RCLCPP_INFO(this->get_logger(), "Selected best response", best_response.text.c_str());
 
         return best_response;
     }

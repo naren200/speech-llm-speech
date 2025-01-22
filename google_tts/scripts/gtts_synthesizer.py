@@ -12,7 +12,12 @@ def synthesize(text, output_file):
         if not os.path.exists(output_dir):
             print(f"Error: Failed to create directory {output_dir}")
             return 1
-        tts = gTTS(text, lang='en')
+        
+        # Handle escaped characters
+        cleaned_text = text.replace("\\\"", "\"")  # Unescape quotes
+        
+        # Synthesize speech
+        tts = gTTS(cleaned_text, lang='en')
         tts.save(output_file)
         print(f"Saved synthesized speech to {output_file}")
         return 0

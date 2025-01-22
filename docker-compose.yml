@@ -1,35 +1,8 @@
 version: '3.8'
 
 
-# networks:
-#   ros_network:
-#     driver: bridge
-
-
 services:
-  # roscore:
-  #   image: osrf/ros:iron-desktop-full  
-  #   command: tail -f /dev/null  # Keep container running
-  #   container_name: roscore
-  #   networks:
-  #     - ros_network
-  #   logging:
-  #     driver: "json-file"
-  #     options:
-  #       max-size: "10m"
-  #       max-file: "3"
-  #   init: true
-  #   privileged: true
-  #   tty: true
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:11311"]
-  #     interval: 5s
-  #     timeout: 10s
-  #     retries: 10
-
   whisper_asr_node:
-    # depends_on:
-    #   - roscore
     image: naren200/whisper_asr_node:v1
     build:
       context: ./Dockerfiles
@@ -37,11 +10,6 @@ services:
     container_name: whisper_asr_node
     environment:
       - AUDIO_FILE=${AUDIO_FILE}
-      # - COMPUTER_ROLE=${COMPUTER_ROLE}
-      # - ROS_MASTER_URI=http://ros_master:11311
-      # - ROS_IP=whisper_asr_node
-    # networks:
-    #   - ros_network
     volumes:
       - "${LOCAL_ROS_WS}/whisper.cpp:/root/ros2_ws/src/speech-llm-speech/whisper.cpp"
       - "${LOCAL_ROS_WS}/whisper_asr:/root/ros2_ws/src/speech-llm-speech/whisper_asr"
@@ -51,26 +19,16 @@ services:
         max-size: "10m"
         max-file: "3"
     init: true
-    # ports:
-    #   - "11434:11434"
     privileged: true
     stdin_open: true
     tty: true
 
   google_tts_node:
-    # depends_on:
-    #   - roscore
     image: naren200/google_tts_node:v1
     build:
       context: ./Dockerfiles
       dockerfile: Dockerfile_google_tts
     container_name: google_tts_node
-    # environment:
-      # - COMPUTER_ROLE=${COMPUTER_ROLE}
-      # - ROS_MASTER_URI=http://ros_master:11311
-      # - ROS_IP=google_tts_node
-    # networks:
-    #   - ros_network
     volumes:
       - "${LOCAL_ROS_WS}/google_tts:/root/ros2_ws/src/speech-llm-speech/google_tts"
     logging:
@@ -79,15 +37,11 @@ services:
         max-size: "10m"
         max-file: "3"
     init: true
-    # ports:
-    #   - "11434:11434"
     privileged: true
     stdin_open: true
     tty: true
 
   decision_maker_node:
-    # depends_on:
-    #   - roscore
     image: naren200/decision_maker_node:v1
     build:
       context: ./Dockerfiles
@@ -101,11 +55,6 @@ services:
       - HUGGINGFACE_MODEL=${HUGGINGFACE_MODEL}
       - LLM_SEQUENCE=${LLM_SEQUENCE}
       - MOCK_MODE=${MOCK_MODE}
-      # - COMPUTER_ROLE=${COMPUTER_ROLE}
-      # - ROS_MASTER_URI=http://ros_master:11311
-      # - ROS_IP=decision_maker_node
-    # networks:
-    #   - ros_network
     volumes:
       - "${LOCAL_ROS_WS}/decision_maker:/root/ros2_ws/src/speech-llm-speech/decision_maker"
     logging:
@@ -114,8 +63,6 @@ services:
         max-size: "10m"
         max-file: "3"
     init: true
-    # ports:
-    #   - "11434:11434"
     privileged: true
     stdin_open: true
     tty: true

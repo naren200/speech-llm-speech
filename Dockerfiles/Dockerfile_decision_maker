@@ -63,7 +63,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     ros-iron-ament-cmake \
     && source /opt/ros/iron/setup.bash \
 
-
 # Install gtts using pip3
 RUN pip3 install gtts && \
     pip3 install flask && \
@@ -71,5 +70,7 @@ RUN pip3 install gtts && \
     pip3 install textblob && \
     pip3 install vaderSentiment 
 
+RUN curl -fsSL https://ollama.com/install.sh | sh
+# RUN ollama serve & ollama pull qwen:0.5b
 
 CMD ["/bin/bash", "-l"]

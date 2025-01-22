@@ -63,9 +63,9 @@ colcon build
 # Source the workspace setup
 source /root/ros2_ws/install/setup.bash
 
-sleep 2
+sleep 90
 
 # Start Flask application
-flask --app /root/ros2_ws/src/speech-llm-speech/whisper_asr/ros_process_control.py run --host=0.0.0.0 --port=5050
+flask --app /root/ros2_ws/src/speech-llm-speech/whisper_asr/ros_process_control.py run --host=0.0.0.0 #--port=5030
 
 #while true; do sleep 2; done
