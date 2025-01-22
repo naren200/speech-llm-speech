@@ -4,6 +4,14 @@ import os
 
 def synthesize(text, output_file):
     try:
+        output_dir = os.path.dirname(output_file)
+        print(f"Creating output directory: {output_dir}")
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Verify directory creation
+        if not os.path.exists(output_dir):
+            print(f"Error: Failed to create directory {output_dir}")
+            return 1
         tts = gTTS(text, lang='en')
         tts.save(output_file)
         print(f"Saved synthesized speech to {output_file}")

@@ -9,14 +9,14 @@ private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
     
     bool synthesizeSpeech(const std::string& text, const std::string& outputFile) {
-        std::string command = "python3 src/speech-llm-speech/google_tts/scripts/gtts_synthesizer.py \"" + text + "\" " + outputFile;
+        std::string command = "python3 /root/ros2_ws/src/speech-llm-speech/google_tts/scripts/gtts_synthesizer.py " + text + " " + outputFile;
         int ret = std::system(command.c_str());
         return ret == 0;
     }
 
     void textToSpeakCallback(const std_msgs::msg::String::SharedPtr msg) {
         std::string text = msg->data;
-        std::string outputFile = "src/speech-llm-speech/google_tts/output/synthesized_speech.wav";
+        std::string outputFile = "/root/ros2_ws/src/speech-llm-speech/google_tts/synthesized_speech.wav";
 
         RCLCPP_INFO(this->get_logger(), "Received text to synthesize: %s", text.c_str());
 
@@ -32,9 +32,9 @@ private:
 public:
     GoogleTTSNode() : Node("google_tts_node") {
         subscription_ = this->create_subscription<std_msgs::msg::String>(
-            "/recognized_speech", 10,
+            "/text_to_speak", 10,
             std::bind(&GoogleTTSNode::textToSpeakCallback, this, std::placeholders::_1));
-            // "/text_to_speak"
+
         RCLCPP_INFO(this->get_logger(), "Google TTS Node is running...");
     }
 };
