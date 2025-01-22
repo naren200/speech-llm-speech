@@ -71,7 +71,24 @@ docker pull naren200/decision_maker_node:v1
 docker pull naren200/whisper_asr_node:v1
 ```
 
-### 4. Test out the system:
+### 4a. Test: Multiple containers in one docker compose. ROS2 communication between containers
+Please pull the latest image, [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#3-pull-docker-image)
+Demo video: [https://youtu.be/7YaoBxjnQag](https://youtu.be/7YaoBxjnQag)
+
+The below commands starts all the docker containers in one go.
+```bash
+./start_all_docker.sh
+```
+The generated audio will be following location: `google_tts/synthesized_speech.wav`.
+
+To stop the docker container, please follow the below commands. It's recommended to stop the containers if you stumble into any issue.
+```bash
+./stop_docker.sh
+```
+
+
+### 4b. Test out the system separately:
+Build the docker image using the following command mentioned [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#steps-to-build-docker-image-from-scratch)
 #### start node: google_tts
 The below commands starts the docker, copies the necessary files inside the docker, builds and sources them for launch. Launch file gets executed automatically through flask.
 ```bash

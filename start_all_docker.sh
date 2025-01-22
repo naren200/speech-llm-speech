@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Set default configuration directly in the script
-# -------------------------------------------------
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 export LOCAL_ROS_WS="$SCRIPT_DIR"
 
