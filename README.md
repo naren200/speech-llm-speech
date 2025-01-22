@@ -44,7 +44,11 @@ The system consists of three main nodes:
 4. **Install Docker Compose on Ubuntu 22.04**  
    Set up Docker Compose using the instructions here:  
    [How to Install and Use Docker Compose on Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-compose-on-ubuntu-22-04)
-
+5. **Install dependancies for connecting mulitple containers**
+   Ensure to complete the following instructions
+```bash
+sudo apt-get install gnome-terminal -y
+```
 
 ## Quick Start
 
@@ -57,10 +61,9 @@ cd speech-llm-speech
 ### 2. Configue the following environment variables in `start_docker.sh` file:
 The local ROS workspace location need to be configured for quick start.
 ```bash
-LOCAL_ROS_WS=your_repo_local_location # REQUIRED
 OPENAI_API_KEY=your_key_here # Optional
 HF_API_KEY=your_key_here # Optional
-OLLAMA_MODEL=gemma2:2b # Optional
+OLLAMA_MODEL=qwen:0.5b # Optional
 MOCK_MODE=0  # Set to 1 to use mock LLM responses # Optional
 ```
 ### 3. Pull docker image
@@ -72,8 +75,11 @@ docker pull naren200/whisper_asr_node:v1
 ```
 
 ### 4a. Test: Multiple containers in one docker compose. ROS2 communication between containers
-Please pull the latest image, [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#3-pull-docker-image)
-Demo video: [https://youtu.be/7YaoBxjnQag](https://youtu.be/7YaoBxjnQag)
+Step 1: Ensure all the dependancies are installed as depicted [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#dependencies-installation-guide)
+
+Step 2: Please pull the latest image, using commands outlined [here](https://github.com/naren200/speech-llm-speech?tab=readme-ov-file#3-pull-docker-image)
+
+**Demo video**: [https://youtu.be/7YaoBxjnQag](https://youtu.be/7YaoBxjnQag)
 
 The below commands starts all the docker containers in one go.
 ```bash
