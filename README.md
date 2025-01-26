@@ -301,4 +301,9 @@ This project is licensed under the MIT License.
 
 
 ## Contributors
-- [naren200](github.com/naren200)
+- [naren200](https://github.com/naren200/)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=nasa-jpl/open-source-rover,naren200/speech-llm-speech&type=Date)](https://star-history.com/#nasa-jpl/open-source-rover&naren200/speech-llm-speech&Date)
+
