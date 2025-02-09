@@ -37,9 +37,9 @@ fi
 
 
 # Check for "build" mode -> Example: ./start_docker.sh transcribe --build=true
-DEVELOPER=False
+export DEVELOPER=False
 if [ "$2" = "--developer=true" ] || [ "$2" = "--developer=True" ]; then
-  DEVELOPER="--developer"
+  export DEVELOPER=True
   echo "Developer mode enabled: Docker images will just be attached."
 fi
 
@@ -76,14 +76,14 @@ PKG="/whisper_asr"
 # Start containers based on role
 if [ "$COMPUTER_ROLE" == "transcribe" ]; then
   PKG="/whisper_asr"
-  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE whisper_asr_node --remove-orphans
+  docker compose -f docker-compose_separate.yml up -d $BUILD_MODE whisper_asr_node --remove-orphans
 elif [ "$COMPUTER_ROLE" == "speak" ]; then
   PKG="/google_tts"
   export LOCAL_ROS_WS="$HOME/Documents/GitHub/speech-llm-speech/google_tts"
-  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE google_tts_node --remove-orphans 
+  docker compose -f docker-compose_separate.yml up -d $BUILD_MODE google_tts_node --remove-orphans 
 elif [ "$COMPUTER_ROLE" == "decide" ]; then
   PKG="/decision_maker"
-  docker compose up -f docker-compose_separate.yml -d $BUILD_MODE decision_maker_node --remove-orphans
+  docker compose -f docker-compose_separate.yml up -d $BUILD_MODE decision_maker_node --remove-orphans
 else
   echo "Invalid role. Use: transcribe, speak, or decide."
   exit 1
